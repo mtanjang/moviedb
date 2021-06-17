@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[5]:
+# In[22]:
 
 
 import pickle
@@ -22,6 +22,19 @@ class MovieDB():
     data_dir = ''
 
     def __init__(self, data_dir):
+        """
+        Initialize the movie database.
+
+        Parameters
+        ----------
+        data_dir : string
+            Contains the path where the movie DB will be stored.
+
+        Returns
+        -------
+        None
+
+        """
         self.data_dir = data_dir
         self.numberofmovies = 0
         self.director_id = 0
@@ -35,6 +48,19 @@ class MovieDB():
         return
 
     def delete_movie(self, movie_id):
+        """
+        Delete a movie from the movie database.
+
+        Parameters
+        ----------
+        movie_id : integer
+            Contains the movie to be deleted
+
+        Returns
+        -------
+        None
+
+        """
 
         olddf = pd.read_csv(self.movie_file_name)
         olddf = pd.DataFrame(olddf, columns=['movie_id', 'title', 'year',
@@ -48,6 +74,26 @@ class MovieDB():
         return
 
     def add_movie(self, title, year, genre, dirName):
+        """
+        Add a movie to the movie database.
+
+        Parameters
+        ----------
+        title : string
+            Contains the title of the movie
+        year : integer
+            The year the movie was produced
+        genre : string
+            Contains the genre of the movie
+        dirName : string
+            Contains the name of the director in Last name, First Name format
+
+        Returns
+        -------
+        movie_id : integer
+            Contains the id of the movie
+
+        """
 
         # read movies.csv
         olddf = pd.read_csv(self.movie_file_name)
@@ -56,8 +102,6 @@ class MovieDB():
 
         olddf['year'] = olddf['year'].astype(int)
         olddf['movie_id'] = olddf['movie_id'].astype(int)
-
-        # read directors.csv
 
         olddirectordf = pd.read_csv(self.director_file_name)
         olddirectordf = pd.DataFrame(olddirectordf, columns=['director_id',
@@ -143,6 +187,19 @@ class MovieDB():
             return(self.numberofmovies)
 
     def add_movies(self, movie_list):
+        """
+        Add movies by batch to the movie database.
+
+        Parameters
+        ----------
+        movie_list : list
+            Contains the details of the movies to be added to the database
+
+        Returns
+        -------
+        None
+
+        """
         newdf = pd.DataFrame(movie_list, columns=['title', 'year', 'genre',
                                                   'director'])
 
@@ -216,6 +273,27 @@ class MovieDB():
 
     def search_movies(self, title=None, year=None, genre=None,
                       director_id=None):
+        """
+        Search for movies in the movie database.
+
+        Parameters
+        ----------
+        title : string
+            Contains the title of the movie to be searched
+        year : integer
+            The year the movie was produced
+        genre : string
+            Contains the genre of the movie to be searched
+        dirName : string
+            Contains the name of the director in Last name, First Name format
+            to be searched
+
+        Returns
+        -------
+        movie_list : list
+            Contains the movied id of the movies fulfilling the search
+
+        """
         olddf = pd.read_csv(self.movie_file_name)
         olddf = pd.DataFrame(olddf, columns=['movie_id', 'title', 'year',
                                              'genre', 'director_id'])
@@ -249,6 +327,15 @@ class MovieDB():
         return (movie_list)
 
     def export_data(self):
+        """
+        Export the data of the movie database.
+
+        Returns
+        -------
+        olddf : Pandas Dataframe
+            Contains the exported information
+
+        """
 
         # read movies.csv
         olddf = pd.read_csv(self.movie_file_name)
@@ -285,6 +372,15 @@ class MovieDB():
         return (olddf)
 
     def token_freq(self):
+        """
+        Generate a token frequency for the movies of the movie database.
+
+        Returns
+        -------
+        result : dictionary
+            Contains the tokens and the count of each token
+
+        """
         olddf = pd.read_csv(self.movie_file_name, encoding='utf-8')
         olddf = pd.DataFrame(olddf, columns=['movie_id', 'title', 'year',
                                              'genre', 'director_id'])
@@ -302,6 +398,21 @@ class MovieDB():
         return result
 
     def generate_statistics(self, stat):
+        """
+        Generate statistics for the movies of the movie database.
+
+        Parameters
+        -------
+        stat : list
+            Contains the statistic to generate ('title', 'genre', 'year',
+            'director', 'all')
+
+        Returns
+        -------
+        result : dictionary
+            Contains the statistics requested
+
+        """
         if stat != 'all' and stat != 'movie' and stat != 'genre' and                 stat != 'director':
             raise MovieDBError
         olddf = pd.read_csv(self.movie_file_name)
@@ -317,7 +428,7 @@ class MovieDB():
                                                              'last_name'])
         olddirectordf['director_id'] = olddirectordf['director_id'
                                                      ].astype(int)
-        #         split_name = dirName.split()
+
         split_name = ''
 
         olddf = pd.merge(olddf, olddirectordf, on='director_id', how='outer')
@@ -330,7 +441,9 @@ class MovieDB():
         movieresult = dict(olddf.groupby('year')['title'].count())
 
         # genre
-        outputdf = olddf.groupby(['genre', 'year']).agg({'year': ['count']})
+        result = outputdf.reset_index()
+
+        outputdf = olddf.groupby(['genre', 'year']).agg({'title': ['count']})
         result = outputdf.reset_index()
         result = result.set_index('genre')
 
@@ -367,6 +480,21 @@ class MovieDB():
             return allresult
 
     def plot_statistics(self, stat):
+        """
+        Plot statistics for the movies of the movie database.
+
+        Parameters
+        -------
+        stat : list
+            Contains the statistic to generate ('title', 'genre', 'year',
+            'director', 'all')
+
+        Returns
+        -------
+        plot : plot
+            Contains the statistics in a graphical format
+
+        """
         if stat != 'all' and stat != 'movie' and stat != 'genre' and                 stat != 'director':
             raise MovieDBError
         olddf = pd.read_csv(self.movie_file_name)
@@ -414,13 +542,22 @@ class MovieDB():
 
         #       for movie
         if stat == 'movie':
-            D = movieresult
+            D = olddf.groupby(['year']).count()
+            x_movie = D.index
+            y_movie = D['movie_id'].values
 
-            plt.bar(range(len(D)), list(D.values()), align='center')
-            plt.xticks(range(len(D)), list(D.keys()))
-
+            fig = plt.figure()
+            ax = fig.add_axes([0, 0, 1, 1])
+            ax.bar(x_movie, y_movie)
             plt.show()
             ax_list = fig.axes
+            #     if stat == 'movie':
+            #         D = movieresult
+
+            #         plt.bar(range(len(D)), list(D.values()), align='center')
+            #         plt.xticks(range(len(D)), list(D.keys()))
+
+            #         plt.show()
             return ax_list
 
         #       for genre
